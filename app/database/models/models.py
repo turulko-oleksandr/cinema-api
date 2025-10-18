@@ -1,6 +1,5 @@
 from enum import Enum as PyEnum
 from uuid import uuid4
-
 from sqlalchemy import (
     Boolean,
     Column,
@@ -42,8 +41,6 @@ class GenderEnum(str, PyEnum):
 
 
 class OrderStatusEnum(str, PyEnum):
-    """Статуси замовлення"""
-
     PENDING = "pending"
     PAID = "paid"
     CANCELED = "canceled"
@@ -63,7 +60,6 @@ class UserGroup(Base):
         Enum(UserGroupEnum, native_enum=False, length=20), unique=True, nullable=False
     )
 
-    # Relationships
     users = relationship("User", back_populates="group")
 
 
@@ -80,7 +76,6 @@ class User(Base):
     )
     group_id = Column(Integer, ForeignKey("user_groups.id"), nullable=False)
 
-    # Relationships
     group = relationship("UserGroup", back_populates="users")
     profile = relationship("UserProfile", back_populates="user", uselist=False)
     activation_token = relationship(
@@ -107,7 +102,6 @@ class UserProfile(Base):
     date_of_birth = Column(DateTime)
     info = Column(Text)
 
-    # Relationships
     user = relationship("User", back_populates="profile")
 
 
@@ -119,7 +113,6 @@ class ActivationToken(Base):
     token = Column(String(255), unique=True, nullable=False, index=True)
     expires_at = Column(DateTime(timezone=True), nullable=False)
 
-    # Relationships
     user = relationship("User", back_populates="activation_token")
 
 
@@ -131,7 +124,6 @@ class PasswordResetToken(Base):
     token = Column(String(255), unique=True, nullable=False, index=True)
     expires_at = Column(DateTime(timezone=True), nullable=False)
 
-    # Relationships
     user = relationship("User", back_populates="password_reset_token")
 
 
@@ -143,7 +135,6 @@ class RefreshToken(Base):
     token = Column(String(500), unique=True, nullable=False, index=True)
     expires_at = Column(DateTime(timezone=True), nullable=False)
 
-    # Relationships
     user = relationship("User", back_populates="refresh_tokens")
 
 
@@ -175,7 +166,6 @@ class Genre(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(100), unique=True, nullable=False)
 
-    # Relationships
     movies = relationship("Movie", secondary=movie_genres, back_populates="genres")
 
 
@@ -185,7 +175,6 @@ class Star(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(255), unique=True, nullable=False)
 
-    # Relationships
     movies = relationship("Movie", secondary=movie_stars, back_populates="stars")
 
 
@@ -195,7 +184,6 @@ class Director(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(255), unique=True, nullable=False)
 
-    # Relationships
     movies = relationship(
         "Movie", secondary=movie_directors, back_populates="directors"
     )
@@ -207,7 +195,6 @@ class Certification(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(50), unique=True, nullable=False)
 
-    # Relationships
     movies = relationship("Movie", back_populates="certification")
 
 
@@ -221,7 +208,7 @@ class Movie(Base):
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=False)
     name = Column(String(500), nullable=False, index=True)
     year = Column(Integer, nullable=False, index=True)
-    time = Column(Integer, nullable=False)  # тривалість у хвилинах
+    time = Column(Integer, nullable=False)
     imdb = Column(Numeric(3, 1), nullable=False)
     votes = Column(Integer, nullable=False)
     meta_score = Column(Numeric(4, 1))
@@ -232,7 +219,7 @@ class Movie(Base):
 
     # Relationships
     certification = relationship("Certification", back_populates="movies")
-    genres = relationship("Movie", secondary=movie_genres, back_populates="movies")
+    genres = relationship("Genre", secondary=movie_genres, back_populates="movies")
     directors = relationship(
         "Director", secondary=movie_directors, back_populates="movies"
     )
@@ -247,7 +234,6 @@ class Cart(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     user_id = Column(Integer, ForeignKey("users.id"), unique=True, nullable=False)
 
-    # Relationships
     user = relationship("User", back_populates="cart")
     items = relationship(
         "CartItem", back_populates="cart", cascade="all, delete-orphan"
@@ -263,7 +249,6 @@ class CartItem(Base):
     movie_id = Column(Integer, ForeignKey("movies.id"), nullable=False)
     added_at = Column(DateTime(timezone=True), server_default=func.now())
 
-    # Relationships
     cart = relationship("Cart", back_populates="items")
     movie = relationship("Movie", back_populates="cart_items")
 
@@ -281,7 +266,6 @@ class Order(Base):
     )
     total_amount = Column(Numeric(10, 2))
 
-    # Relationships
     user = relationship("User", back_populates="orders")
     items = relationship(
         "OrderItem", back_populates="order", cascade="all, delete-orphan"
@@ -297,7 +281,6 @@ class OrderItem(Base):
     movie_id = Column(Integer, ForeignKey("movies.id"), nullable=False)
     price_at_order = Column(Numeric(10, 2), nullable=False)
 
-    # Relationships
     order = relationship("Order", back_populates="items")
     movie = relationship("Movie", back_populates="order_items")
     payment_items = relationship("PaymentItem", back_populates="order_item")
@@ -318,7 +301,6 @@ class Payment(Base):
     amount = Column(Numeric(10, 2), nullable=False)
     external_payment_id = Column(String(255), index=True)
 
-    # Relationships
     user = relationship("User", back_populates="payments")
     order = relationship("Order", back_populates="payments")
     items = relationship(
@@ -334,6 +316,5 @@ class PaymentItem(Base):
     order_item_id = Column(Integer, ForeignKey("order_items.id"), nullable=False)
     price_at_payment = Column(Numeric(10, 2), nullable=False)
 
-    # Relationships
     payment = relationship("Payment", back_populates="items")
     order_item = relationship("OrderItem", back_populates="payment_items")
