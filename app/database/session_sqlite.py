@@ -1,7 +1,9 @@
+import os
+
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 
-SQLALCHEMY_DATABASE_URL = "sqlite:///./cinema_api.db"
+SQLALCHEMY_DATABASE_URL = os.environ.get("SQLITE_URL")
 
 engine = create_async_engine(SQLALCHEMY_DATABASE_URL, echo=True, future=True)
 SessionLocal = sessionmaker(
