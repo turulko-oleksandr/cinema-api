@@ -1,9 +1,12 @@
 import os
 
+from dotenv import load_dotenv
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 
-SQLALCHEMY_DATABASE_URL = os.environ.get("SQLITE_URL")
+load_dotenv()
+
+SQLALCHEMY_DATABASE_URL = os.getenv("SQLITE_URL")
 
 engine = create_async_engine(SQLALCHEMY_DATABASE_URL, echo=True, future=True)
 SessionLocal = sessionmaker(

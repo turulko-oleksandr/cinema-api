@@ -1,7 +1,10 @@
 from fastapi import FastAPI
-from app.routes import *
+from routes import *
 from database.models.models import Base
 from database.session_sqlite import engine
+
+
+app = FastAPI(title="Cinema", description="")
 
 
 @app.on_event("startup")
@@ -9,8 +12,6 @@ async def on_startup():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
-
-app = FastAPI(title="Cinema", description="")
 
 api_version_prefix = "/api/v1"
 
