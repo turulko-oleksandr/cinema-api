@@ -103,7 +103,7 @@ async def get_movie_by_uuid_endpoint(
     return movie
 
 
-@router.put("/{movie_id}", response_model=MovieResponse, summary="Update movie")
+@router.patch("/{movie_id}", response_model=MovieResponse, summary="Update movie")
 async def update_movie_endpoint(
     movie_id: int, movie: MovieUpdate, db: AsyncSession = Depends(get_db)
 ):

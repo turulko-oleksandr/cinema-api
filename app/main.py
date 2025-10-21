@@ -25,3 +25,6 @@ app.include_router(
 app.include_router(
     directors_router, prefix=f"{api_version_prefix}/directors", tags=["Directors"]
 )
+app.include_router(
+    stars_router, prefix=f"{api_version_prefix}/stars", tags=["Stars"]
+)

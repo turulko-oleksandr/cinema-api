@@ -48,7 +48,7 @@ async def create_director_endpoint(
         )
 
 
-@router.put("/{director_id}", response_model=DirectorResponse, status_code=200)
+@router.patch("/{director_id}", response_model=DirectorResponse, status_code=200)
 async def update_director_endpoint(
     director_id: int, director_update: DirectorUpdate, db: AsyncSession = Depends(get_db)
 ):

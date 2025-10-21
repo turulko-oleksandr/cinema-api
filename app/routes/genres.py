@@ -48,7 +48,7 @@ async def create_genre_endpoint(
         )
 
 
-@router.put("/{genre_id}", response_model=GenreResponse, status_code=200)
+@router.patch("/{genre_id}", response_model=GenreResponse, status_code=200)
 async def update_genre_endpoint(
     genre_id: int, genre_update: GenreUpdate, db: AsyncSession = Depends(get_db)
 ):
