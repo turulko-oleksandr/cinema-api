@@ -6,16 +6,19 @@ from database.db_session import engine
 
 app = FastAPI(title="Cinema", description="")
 
+
 @app.on_event("startup")
 async def on_startup():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
 
-
 api_version_prefix = "/api/v1"
 
 app.include_router(
-    accounts_router, prefix=f"{api_version_prefix}/accounts", tags=["accounts"]
+    accounts_router, prefix=f"{api_version_prefix}/accounts", tags=["Accounts"]
 )
 app.include_router(movie_router, prefix=f"{api_version_prefix}/movies", tags=["Movies"])
+app.include_router(
+    genres_router, prefix=f"{api_version_prefix}/genres", tags=["Genres"]
+)

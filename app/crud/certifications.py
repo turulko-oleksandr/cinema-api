@@ -28,8 +28,12 @@ async def get_certifications(db: AsyncSession, skip: int = 0, limit: int = 100):
     return result.scalars().all()
 
 
-async def update_certification(db: AsyncSession, certification_id: int, certification: CertificationUpdate):
-    result = await db.execute(select(Certification).where(Certification.id == certification_id))
+async def update_certification(
+    db: AsyncSession, certification_id: int, certification: CertificationUpdate
+):
+    result = await db.execute(
+        select(Certification).where(Certification.id == certification_id)
+    )
     db_certification = result.scalar_one_or_none()
     if not db_certification:
         return None
@@ -43,7 +47,9 @@ async def update_certification(db: AsyncSession, certification_id: int, certific
 
 
 async def delete_certification(db: AsyncSession, certification_id: int):
-    result = await db.execute(select(Certification).where(Certification.id == certification_id))
+    result = await db.execute(
+        select(Certification).where(Certification.id == certification_id)
+    )
     db_certification = result.scalar_one_or_none()
     if not db_certification:
         return None
@@ -51,4 +57,3 @@ async def delete_certification(db: AsyncSession, certification_id: int):
     await db.delete(db_certification)
     await db.commit()
     return db_certification
-

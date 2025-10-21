@@ -2,15 +2,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, delete
 from sqlalchemy.orm import selectinload
 from database.models.models import (
-    Genre, Star, Director, Movie,
+    Genre,
+    Star,
+    Director,
+    Movie,
 )
-from schemas import (
-    MovieCreate, MovieUpdate
-)
+from schemas import MovieCreate, MovieUpdate
 
 
 async def create_movie(db: AsyncSession, movie: MovieCreate):
-    movie_data = movie.model_dump(exclude={'genre_ids', 'director_ids', 'star_ids'})
+    movie_data = movie.model_dump(exclude={"genre_ids", "director_ids", "star_ids"})
     new_movie = Movie(**movie_data)
 
     # Add relationships
@@ -19,7 +20,9 @@ async def create_movie(db: AsyncSession, movie: MovieCreate):
         new_movie.genres = result.scalars().all()
 
     if movie.director_ids:
-        result = await db.execute(select(Director).where(Director.id.in_(movie.director_ids)))
+        result = await db.execute(
+            select(Director).where(Director.id.in_(movie.director_ids))
+        )
         new_movie.directors = result.scalars().all()
 
     if movie.star_ids:
@@ -39,7 +42,7 @@ async def get_movie(db: AsyncSession, movie_id: int):
             selectinload(Movie.genres),
             selectinload(Movie.directors),
             selectinload(Movie.stars),
-            selectinload(Movie.certification)
+            selectinload(Movie.certification),
         )
         .where(Movie.id == movie_id)
     )
@@ -53,7 +56,7 @@ async def get_movie_by_uuid(db: AsyncSession, movie_uuid: str):
             selectinload(Movie.genres),
             selectinload(Movie.directors),
             selectinload(Movie.stars),
-            selectinload(Movie.certification)
+            selectinload(Movie.certification),
         )
         .where(Movie.uuid == movie_uuid)
     )
@@ -67,7 +70,7 @@ async def get_movies(db: AsyncSession, skip: int = 0, limit: int = 100):
             selectinload(Movie.genres),
             selectinload(Movie.directors),
             selectinload(Movie.stars),
-            selectinload(Movie.certification)
+            selectinload(Movie.certification),
         )
         .offset(skip)
         .limit(limit)
@@ -81,7 +84,9 @@ async def update_movie(db: AsyncSession, movie_id: int, movie: MovieUpdate):
     if not db_movie:
         return None
 
-    movie_data = movie.model_dump(exclude_unset=True, exclude={'genre_ids', 'director_ids', 'star_ids'})
+    movie_data = movie.model_dump(
+        exclude_unset=True, exclude={"genre_ids", "director_ids", "star_ids"}
+    )
     for key, value in movie_data.items():
         setattr(db_movie, key, value)
 
@@ -91,7 +96,9 @@ async def update_movie(db: AsyncSession, movie_id: int, movie: MovieUpdate):
         db_movie.genres = result.scalars().all()
 
     if movie.director_ids is not None:
-        result = await db.execute(select(Director).where(Director.id.in_(movie.director_ids)))
+        result = await db.execute(
+            select(Director).where(Director.id.in_(movie.director_ids))
+        )
         db_movie.directors = result.scalars().all()
 
     if movie.star_ids is not None:

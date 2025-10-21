@@ -3,32 +3,17 @@ from .movies import (
     MovieCreate,
     MovieUpdate,
     MovieResponse,
-    MovieListResponse
+    MovieListResponse,
 )
-from .genres import (
-    GenreBase,
-    GenreCreate,
-    GenreUpdate,
-    GenreResponse
-)
+from .genres import GenreBase, GenreCreate, GenreUpdate, GenreResponse
 from .certifications import (
     CertificationBase,
     CertificationCreate,
     CertificationUpdate,
-    CertificationResponse
+    CertificationResponse,
 )
-from .stars import (
-    StarBase,
-    StarCreate,
-    StarUpdate,
-    StarResponse
-)
-from .directors import (
-    DirectorBase,
-    DirectorCreate,
-    DirectorUpdate,
-    DirectorResponse
-)
+from .stars import StarBase, StarCreate, StarUpdate, StarResponse
+from .directors import DirectorBase, DirectorCreate, DirectorUpdate, DirectorResponse
 
 __all__ = [
     # Genre schemas

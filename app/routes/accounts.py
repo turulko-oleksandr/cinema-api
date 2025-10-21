@@ -7,6 +7,7 @@ from database.models.models import User
 
 router = APIRouter()
 
+
 # Test db connection in endpoints
 @router.get("/count")
 async def get_user_count(db: AsyncSession = Depends(get_db)):

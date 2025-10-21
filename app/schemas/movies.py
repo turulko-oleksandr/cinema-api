@@ -9,6 +9,7 @@ from schemas.certifications import CertificationResponse
 from schemas.directors import DirectorResponse
 from schemas.stars import StarResponse
 
+
 class MovieBase(BaseModel):
     name: str = Field(..., max_length=500)
     year: int = Field(..., ge=1800, le=2100)

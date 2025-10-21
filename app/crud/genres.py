@@ -16,9 +16,7 @@ async def create_genre(db: AsyncSession, genre: GenreCreate):
 
 async def get_genre(db: AsyncSession, genre_id: int):
     result = await db.execute(
-        select(Genre)
-        .options(selectinload(Genre.movies))
-        .where(Genre.id == genre_id)
+        select(Genre).options(selectinload(Genre.movies)).where(Genre.id == genre_id)
     )
     return result.scalar_one_or_none()
 

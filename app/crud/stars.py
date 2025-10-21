@@ -16,9 +16,7 @@ async def create_star(db: AsyncSession, star: StarCreate):
 
 async def get_star(db: AsyncSession, star_id: int):
     result = await db.execute(
-        select(Star)
-        .options(selectinload(Star.movies))
-        .where(Star.id == star_id)
+        select(Star).options(selectinload(Star.movies)).where(Star.id == star_id)
     )
     return result.scalar_one_or_none()
 
