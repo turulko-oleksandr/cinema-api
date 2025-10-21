@@ -22,3 +22,6 @@ app.include_router(movie_router, prefix=f"{api_version_prefix}/movies", tags=["M
 app.include_router(
     genres_router, prefix=f"{api_version_prefix}/genres", tags=["Genres"]
 )
+app.include_router(
+    directors_router, prefix=f"{api_version_prefix}/directors", tags=["Directors"]
+)

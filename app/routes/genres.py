@@ -10,7 +10,7 @@ from schemas import GenreResponse, GenreCreate, GenreUpdate
 router = APIRouter(tags=["Genres"])
 
 
-@router.get("/genres", response_model=List[GenreResponse], status_code=200)
+@router.get("/", response_model=List[GenreResponse], status_code=200)
 async def get_genres_endpoint(
     db: AsyncSession = Depends(get_db),
     skip: int = Query(0, ge=0, description="Number of records to skip"),
@@ -22,7 +22,7 @@ async def get_genres_endpoint(
     return genres
 
 
-@router.get("/genres/{genre_id}", response_model=GenreResponse, status_code=200)
+@router.get("/{genre_id}", response_model=GenreResponse, status_code=200)
 async def get_genre_endpoint(genre_id: int, db: AsyncSession = Depends(get_db)):
     genre = await get_genre(db, genre_id)
     if genre is None:
@@ -33,7 +33,7 @@ async def get_genre_endpoint(genre_id: int, db: AsyncSession = Depends(get_db)):
     return genre
 
 
-@router.post("/genres", response_model=GenreResponse, status_code=201)
+@router.post("/", response_model=GenreResponse, status_code=201)
 async def create_genre_endpoint(
     genre: GenreCreate,
     db: AsyncSession = Depends(get_db),
@@ -48,7 +48,7 @@ async def create_genre_endpoint(
         )
 
 
-@router.put("/genres/{genre_id}", response_model=GenreResponse, status_code=200)
+@router.put("/{genre_id}", response_model=GenreResponse, status_code=200)
 async def update_genre_endpoint(
     genre_id: int, genre_update: GenreUpdate, db: AsyncSession = Depends(get_db)
 ):
@@ -61,7 +61,7 @@ async def update_genre_endpoint(
     return updated_genre
 
 
-@router.delete("/genres/{genre_id}", response_model=GenreResponse, status_code=200)
+@router.delete("/{genre_id}", response_model=GenreResponse, status_code=200)
 async def delete_genre_endpoint(genre_id: int, db: AsyncSession = Depends(get_db)):
     deleted_genre = await delete_genre(db, genre_id)
     if deleted_genre is None:
@@ -70,3 +70,4 @@ async def delete_genre_endpoint(genre_id: int, db: AsyncSession = Depends(get_db
             detail=f"Genre with ID {genre_id} not found",
         )
     return deleted_genre
+
