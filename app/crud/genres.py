@@ -1,9 +1,11 @@
-from sqlalchemy import select
+from typing import List
+
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from database.models.models import Genre
-from schemas.genres import GenreCreate, GenreUpdate
+from ..database.models.models import Genre, Movie
+from ..schemas.genres import GenreCreate, GenreUpdate
 
 
 async def create_genre(db: AsyncSession, genre: GenreCreate):
@@ -49,3 +51,29 @@ async def delete_genre(db: AsyncSession, genre_id: int):
     await db.delete(db_genre)
     await db.commit()
     return db_genre
+
+
+async def get_genres_with_count(db: AsyncSession) -> List[dict]:
+    """
+    Get all genres with movie count
+
+    Returns: [{id, name, movie_count}]
+    """
+    query = (
+        select(
+            Genre.id,
+            Genre.name,
+            func.count(Movie.id).label("movie_count"),
+        )
+        .outerjoin(Genre.movies)
+        .group_by(Genre.id, Genre.name)
+        .order_by(Genre.name)
+    )
+
+    result = await db.execute(query)
+    genres = result.all()
+
+    return [
+        {"id": genre.id, "name": genre.name, "movie_count": genre.movie_count}
+        for genre in genres
+    ]

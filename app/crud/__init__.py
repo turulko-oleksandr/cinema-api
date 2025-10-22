@@ -20,6 +20,7 @@ from .genres import (
     get_genres,
     update_genre,
     delete_genre,
+    get_genres_with_count,
 )
 
 from .movies import (

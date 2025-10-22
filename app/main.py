@@ -1,7 +1,7 @@
 from fastapi import FastAPI
-from routes import *
-from database.models.models import Base
-from database.db_session import engine
+from .routes import *
+from .database.models.models import Base
+from .database.db_session import engine
 
 
 app = FastAPI(title="Cinema", description="")
@@ -25,6 +25,9 @@ app.include_router(
 app.include_router(
     directors_router, prefix=f"{api_version_prefix}/directors", tags=["Directors"]
 )
+app.include_router(stars_router, prefix=f"{api_version_prefix}/stars", tags=["Stars"])
 app.include_router(
-    stars_router, prefix=f"{api_version_prefix}/stars", tags=["Stars"]
+    certifications_router,
+    prefix=f"{api_version_prefix}/certifications",
+    tags=["Certifications"],
 )

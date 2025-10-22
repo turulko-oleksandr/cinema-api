@@ -4,10 +4,10 @@ from uuid import UUID
 from datetime import datetime
 from decimal import Decimal
 
-from schemas.genres import GenreResponse
-from schemas.certifications import CertificationResponse
-from schemas.directors import DirectorResponse
-from schemas.stars import StarResponse
+from ..schemas.genres import GenreResponse
+from ..schemas.certifications import CertificationResponse
+from ..schemas.directors import DirectorResponse
+from ..schemas.stars import StarResponse
 
 
 class MovieBase(BaseModel):
@@ -69,3 +69,53 @@ class MovieListResponse(BaseModel):
     genres: List[GenreResponse] = []
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class PaginatedMoviesResponse(BaseModel):
+    """Paginated response for movies list"""
+
+    items: List[MovieListResponse]
+    total: int = Field(..., description="Total number of items")
+    skip: int = Field(..., description="Number of skipped items")
+    limit: int = Field(..., description="Items per page")
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class MovieSearchParams(BaseModel):
+    """Parameters for movie search"""
+
+    query: str = Field(..., min_length=1, description="Search query")
+    search_in: List[str] = Field(
+        default=["title", "description"],
+        description="Fields to search in",
+    )
+    page: int = Field(default=1, ge=1)
+    limit: int = Field(default=20, ge=1, le=100)
+
+
+class MovieFilterParams(BaseModel):
+    """Parameters for movie filtering"""
+
+    year_from: Optional[int] = Field(None, ge=1900)
+    year_to: Optional[int] = Field(None, le=2100)
+    imdb_min: Optional[float] = Field(None, ge=0, le=10)
+    imdb_max: Optional[float] = Field(None, ge=0, le=10)
+    price_min: Optional[Decimal] = Field(None, ge=0)
+    price_max: Optional[Decimal] = Field(None, ge=0)
+    genre_ids: Optional[List[int]] = None
+    certification_ids: Optional[List[int]] = None
+    page: int = Field(default=1, ge=1)
+    limit: int = Field(default=20, ge=1, le=100)
+    sort_by: str = Field(default="id")
+    order: str = Field(default="asc", pattern="^(asc|desc)$")
+
+
+class MovieSortParams(BaseModel):
+    """Parameters for movie sorting"""
+
+    sort_by: str = Field(
+        default="id",
+        description="Field to sort by (id, name, year, imdb, price, votes)",
+    )
+    order: str = Field(default="asc", pattern="^(asc|desc)$")

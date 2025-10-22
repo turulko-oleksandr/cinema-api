@@ -3,9 +3,15 @@ from typing import List
 from fastapi import APIRouter, Depends, Query, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from crud import get_directors, create_director, get_director, update_director, delete_director
-from database.db_session import get_db
-from schemas import DirectorResponse, DirectorCreate, DirectorUpdate
+from ..crud import (
+    get_directors,
+    create_director,
+    get_director,
+    update_director,
+    delete_director,
+)
+from ..database.db_session import get_db
+from ..schemas import DirectorResponse, DirectorCreate, DirectorUpdate
 
 router = APIRouter(tags=["Directors"])
 
@@ -50,7 +56,9 @@ async def create_director_endpoint(
 
 @router.patch("/{director_id}", response_model=DirectorResponse, status_code=200)
 async def update_director_endpoint(
-    director_id: int, director_update: DirectorUpdate, db: AsyncSession = Depends(get_db)
+    director_id: int,
+    director_update: DirectorUpdate,
+    db: AsyncSession = Depends(get_db),
 ):
     updated_director = await update_director(db, director_id, director_update)
     if updated_director is None:
@@ -62,7 +70,9 @@ async def update_director_endpoint(
 
 
 @router.delete("/{director_id}", response_model=DirectorResponse, status_code=200)
-async def delete_director_endpoint(director_id: int, db: AsyncSession = Depends(get_db)):
+async def delete_director_endpoint(
+    director_id: int, db: AsyncSession = Depends(get_db)
+):
     deleted_director = await delete_director(db, director_id)
     if deleted_director is None:
         raise HTTPException(

@@ -4,8 +4,18 @@ from .movies import (
     MovieUpdate,
     MovieResponse,
     MovieListResponse,
+    PaginatedMoviesResponse,
+    MovieSearchParams,
+    MovieFilterParams,
+    MovieSortParams,
 )
-from .genres import GenreBase, GenreCreate, GenreUpdate, GenreResponse
+from .genres import (
+    GenreBase,
+    GenreCreate,
+    GenreUpdate,
+    GenreResponse,
+    GenreWithCountResponse,
+)
 from .certifications import (
     CertificationBase,
     CertificationCreate,
