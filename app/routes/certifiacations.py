@@ -3,15 +3,17 @@ from typing import List
 from fastapi import APIRouter, Depends, Query, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..crud import (
+from crud import (
     get_certifications,
     create_certification,
     get_certification,
     update_certification,
     delete_certification,
 )
-from ..database.db_session import get_db
-from ..schemas import CertificationResponse, CertificationCreate, CertificationUpdate
+from database.db_session import get_db
+from database.models import User
+from schemas import CertificationResponse, CertificationCreate, CertificationUpdate
+from services.role_manager import require_moderator
 
 router = APIRouter(tags=["Certifications"])
 
@@ -46,6 +48,7 @@ async def get_certification_endpoint(
 @router.post("/", response_model=CertificationResponse, status_code=201)
 async def create_certification_endpoint(
     certification: CertificationCreate,
+    user: User = Depends(require_moderator),
     db: AsyncSession = Depends(get_db),
 ):
     try:
@@ -64,6 +67,7 @@ async def create_certification_endpoint(
 async def update_certification_endpoint(
     certification_id: int,
     certification_update: CertificationUpdate,
+    user: User = Depends(require_moderator),
     db: AsyncSession = Depends(get_db),
 ):
     updated_certification = await update_certification(
@@ -81,7 +85,9 @@ async def update_certification_endpoint(
     "/{certification_id}", response_model=CertificationResponse, status_code=200
 )
 async def delete_certification_endpoint(
-    certification_id: int, db: AsyncSession = Depends(get_db)
+    certification_id: int,
+    user: User = Depends(require_moderator),
+    db: AsyncSession = Depends(get_db),
 ):
     deleted_certification = await delete_certification(db, certification_id)
     if deleted_certification is None:

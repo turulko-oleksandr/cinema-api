@@ -4,8 +4,9 @@ from sqlalchemy.exc import IntegrityError
 from typing import List, Optional
 from uuid import UUID
 
-from ..database.db_session import get_db
-from ..crud.movies import (
+from database import User
+from database.db_session import get_db
+from crud.movies import (
     create_movie,
     get_movie,
     get_movie_by_uuid,
@@ -18,13 +19,14 @@ from ..crud.movies import (
     get_trending_movies,
     get_new_releases,
 )
-from ..schemas.movies import (
+from schemas.movies import (
     MovieCreate,
     MovieUpdate,
     MovieResponse,
     MovieListResponse,
     PaginatedMoviesResponse,
 )
+from services.role_manager import get_current_user_optional, require_moderator
 
 router = APIRouter()
 
@@ -35,7 +37,11 @@ router = APIRouter()
     status_code=status.HTTP_201_CREATED,
     summary="Create a new movie",
 )
-async def create_movie_endpoint(movie: MovieCreate, db: AsyncSession = Depends(get_db)):
+async def create_movie_endpoint(
+    movie: MovieCreate,
+    user: User = Depends(require_moderator),
+    db: AsyncSession = Depends(get_db),
+):
     """Create a new movie with all related information."""
     try:
         new_movie = await create_movie(db, movie)
@@ -260,6 +266,7 @@ async def get_movie_by_uuid_endpoint(
 async def update_movie_endpoint(
     movie_id: int,
     movie: MovieUpdate,
+    user: User = Depends(require_moderator),
     db: AsyncSession = Depends(get_db),
 ):
     """
@@ -292,7 +299,11 @@ async def update_movie_endpoint(
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Delete movie",
 )
-async def delete_movie_endpoint(movie_id: int, db: AsyncSession = Depends(get_db)):
+async def delete_movie_endpoint(
+    movie_id: int,
+    current_user: User = Depends(require_moderator),
+    db: AsyncSession = Depends(get_db),
+):
     """Delete a movie by its ID."""
     deleted = await delete_movie(db, movie_id)
     if not deleted:

@@ -3,9 +3,11 @@ from typing import List
 from fastapi import APIRouter, Depends, Query, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..crud import get_stars, create_star, get_star, update_star, delete_star
-from ..database.db_session import get_db
-from ..schemas import StarResponse, StarCreate, StarUpdate
+from crud import get_stars, create_star, get_star, update_star, delete_star
+from database import User
+from database.db_session import get_db
+from schemas import StarResponse, StarCreate, StarUpdate
+from services.role_manager import require_moderator
 
 router = APIRouter(tags=["Stars"])
 
@@ -36,6 +38,7 @@ async def get_star_endpoint(star_id: int, db: AsyncSession = Depends(get_db)):
 @router.post("/", response_model=StarResponse, status_code=201)
 async def create_star_endpoint(
     star: StarCreate,
+    user: User = Depends(require_moderator),
     db: AsyncSession = Depends(get_db),
 ):
     try:
@@ -50,7 +53,10 @@ async def create_star_endpoint(
 
 @router.patch("/{star_id}", response_model=StarResponse, status_code=200)
 async def update_star_endpoint(
-    star_id: int, star_update: StarUpdate, db: AsyncSession = Depends(get_db)
+    star_id: int,
+    star_update: StarUpdate,
+    user: User = Depends(require_moderator),
+    db: AsyncSession = Depends(get_db),
 ):
     updated_star = await update_star(db, star_id, star_update)
     if updated_star is None:
@@ -62,7 +68,11 @@ async def update_star_endpoint(
 
 
 @router.delete("/{star_id}", response_model=StarResponse, status_code=200)
-async def delete_star_endpoint(star_id: int, db: AsyncSession = Depends(get_db)):
+async def delete_star_endpoint(
+    star_id: int,
+    user: User = Depends(require_moderator),
+    db: AsyncSession = Depends(get_db),
+):
     deleted_star = await delete_star(db, star_id)
     if deleted_star is None:
         raise HTTPException(

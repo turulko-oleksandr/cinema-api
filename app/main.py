@@ -1,7 +1,7 @@
 from fastapi import FastAPI
-from .routes import *
-from .database.models.models import Base
-from .database.db_session import engine
+from routes import *
+from database.models.models import Base
+from database.db_session import engine
 
 
 app = FastAPI(title="Cinema", description="")
