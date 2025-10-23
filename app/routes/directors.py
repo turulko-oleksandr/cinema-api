@@ -3,15 +3,15 @@ from typing import List
 from fastapi import APIRouter, Depends, Query, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..crud import (
+from crud import (
     get_directors,
     create_director,
     get_director,
     update_director,
     delete_director,
 )
-from ..database.db_session import get_db
-from ..schemas import DirectorResponse, DirectorCreate, DirectorUpdate
+from database.db_session import get_db
+from schemas import DirectorResponse, DirectorCreate, DirectorUpdate
 
 router = APIRouter(tags=["Directors"])
 

@@ -2,10 +2,10 @@ from typing import List
 from fastapi import APIRouter, Depends, Query, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..crud.genres import get_genres_with_count
-from ..crud import get_genres, create_genre, get_genre, update_genre, delete_genre
-from ..database.db_session import get_db
-from ..schemas import GenreResponse, GenreCreate, GenreUpdate, GenreWithCountResponse
+from crud.genres import get_genres_with_count
+from crud import get_genres, create_genre, get_genre, update_genre, delete_genre
+from database.db_session import get_db
+from schemas import GenreResponse, GenreCreate, GenreUpdate, GenreWithCountResponse
 
 router = APIRouter(tags=["Genres"])
 

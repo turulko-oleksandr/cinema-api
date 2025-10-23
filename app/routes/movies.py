@@ -4,8 +4,8 @@ from sqlalchemy.exc import IntegrityError
 from typing import List, Optional
 from uuid import UUID
 
-from ..database.db_session import get_db
-from ..crud.movies import (
+from database.db_session import get_db
+from crud.movies import (
     create_movie,
     get_movie,
     get_movie_by_uuid,
@@ -18,7 +18,7 @@ from ..crud.movies import (
     get_trending_movies,
     get_new_releases,
 )
-from ..schemas.movies import (
+from schemas.movies import (
     MovieCreate,
     MovieUpdate,
     MovieResponse,
