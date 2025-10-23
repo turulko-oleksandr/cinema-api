@@ -12,9 +12,6 @@ from services.role_manager import require_moderator
 router = APIRouter(tags=["Genres"])
 
 
-# ============= СПЕЦІАЛЬНІ МАРШРУТИ (ПЕРЕД ПАРАМЕТРИЗОВАНИМИ) =============
-
-
 @router.get(
     "/statistics",
     response_model=List[GenreWithCountResponse],
@@ -28,9 +25,6 @@ async def get_genres_statistics_endpoint(db: AsyncSession = Depends(get_db)):
     """
     genres = await get_genres_with_count(db)
     return genres
-
-
-# ============= БАЗОВІ CRUD ОПЕРАЦІЇ =============
 
 
 @router.get("/", response_model=List[GenreResponse], status_code=status.HTTP_200_OK)

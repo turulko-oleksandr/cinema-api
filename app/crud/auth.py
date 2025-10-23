@@ -1,5 +1,3 @@
-# app/crud/auth.py
-
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, delete
 from sqlalchemy.orm import selectinload
