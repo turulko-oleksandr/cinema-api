@@ -10,8 +10,10 @@ from crud import (
     update_director,
     delete_director,
 )
+from database import User
 from database.db_session import get_db
 from schemas import DirectorResponse, DirectorCreate, DirectorUpdate
+from services.role_manager import require_moderator
 
 router = APIRouter(tags=["Directors"])
 
@@ -42,6 +44,7 @@ async def get_director_endpoint(director_id: int, db: AsyncSession = Depends(get
 @router.post("Director", response_model=DirectorResponse, status_code=201)
 async def create_director_endpoint(
     director: DirectorCreate,
+    user: User = Depends(require_moderator),
     db: AsyncSession = Depends(get_db),
 ):
     try:
@@ -58,6 +61,7 @@ async def create_director_endpoint(
 async def update_director_endpoint(
     director_id: int,
     director_update: DirectorUpdate,
+    user: User = Depends(require_moderator),
     db: AsyncSession = Depends(get_db),
 ):
     updated_director = await update_director(db, director_id, director_update)
@@ -71,7 +75,9 @@ async def update_director_endpoint(
 
 @router.delete("/{director_id}", response_model=DirectorResponse, status_code=200)
 async def delete_director_endpoint(
-    director_id: int, db: AsyncSession = Depends(get_db)
+    director_id: int,
+    user: User = Depends(require_moderator),
+    db: AsyncSession = Depends(get_db),
 ):
     deleted_director = await delete_director(db, director_id)
     if deleted_director is None:

@@ -37,7 +37,6 @@ router = APIRouter(tags=["Accounts"])
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
-
 @router.post("/register/", status_code=201)
 async def register_user(
     payload: UserRegistrationRequestSchema,

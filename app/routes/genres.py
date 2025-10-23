@@ -4,8 +4,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from crud.genres import get_genres_with_count
 from crud import get_genres, create_genre, get_genre, update_genre, delete_genre
+from database import User
 from database.db_session import get_db
 from schemas import GenreResponse, GenreCreate, GenreUpdate, GenreWithCountResponse
+from services.role_manager import require_moderator
 
 router = APIRouter(tags=["Genres"])
 
@@ -47,6 +49,7 @@ async def get_genres_endpoint(
 @router.post("/", response_model=GenreResponse, status_code=status.HTTP_201_CREATED)
 async def create_genre_endpoint(
     genre: GenreCreate,
+    user: User = Depends(require_moderator),
     db: AsyncSession = Depends(get_db),
 ):
     """Create a new genre"""
@@ -76,7 +79,10 @@ async def get_genre_endpoint(genre_id: int, db: AsyncSession = Depends(get_db)):
     "/{genre_id}", response_model=GenreResponse, status_code=status.HTTP_200_OK
 )
 async def update_genre_endpoint(
-    genre_id: int, genre_update: GenreUpdate, db: AsyncSession = Depends(get_db)
+    genre_id: int,
+    genre_update: GenreUpdate,
+    user: User = Depends(require_moderator),
+    db: AsyncSession = Depends(get_db),
 ):
     """Update genre by ID"""
     updated_genre = await update_genre(db, genre_id, genre_update)
@@ -91,7 +97,11 @@ async def update_genre_endpoint(
 @router.delete(
     "/{genre_id}", response_model=GenreResponse, status_code=status.HTTP_200_OK
 )
-async def delete_genre_endpoint(genre_id: int, db: AsyncSession = Depends(get_db)):
+async def delete_genre_endpoint(
+    genre_id: int,
+    user: User = Depends(require_moderator),
+    db: AsyncSession = Depends(get_db),
+):
     """Delete genre by ID"""
     deleted_genre = await delete_genre(db, genre_id)
     if deleted_genre is None:
