@@ -4,3 +4,5 @@ from .genres import router as genres_router
 from .directors import router as directors_router
 from .stars import router as stars_router
 from .certifiacations import router as certifications_router
+from .orders import router as orders_router
+from .cart import router as cart_router

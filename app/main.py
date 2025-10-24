@@ -31,3 +31,5 @@ app.include_router(
     prefix=f"{api_version_prefix}/certifications",
     tags=["Certifications"],
 )
+app.include_router(cart.router, prefix="/api/v1/cart", tags=["Cart"])
+app.include_router(orders.router, prefix="/api/v1/orders", tags=["Orders"])
