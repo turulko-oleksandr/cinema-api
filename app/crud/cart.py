@@ -1,9 +1,17 @@
 from typing import List, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, delete
+from sqlalchemy import select, delete, or_
 from sqlalchemy.orm import selectinload
 
-from database.models.models import Cart, CartItem, Movie, User
+from database.models.models import (
+    Cart,
+    CartItem,
+    Movie,
+    User,
+    Order,
+    OrderItem,
+    OrderStatusEnum,
+)
 
 
 async def get_or_create_cart(db: AsyncSession, user_id: int) -> Cart:
@@ -39,16 +47,37 @@ async def get_cart_with_items(db: AsyncSession, user_id: int) -> Optional[Cart]:
     return result.scalar_one_or_none()
 
 
-async def add_item_to_cart(db: AsyncSession, user_id: int, movie_id: int) -> CartItem:
-    """Add movie to user's cart"""
-    cart = await get_or_create_cart(db, user_id)
+async def is_movie_purchased(db: AsyncSession, user_id: int, movie_id: int) -> bool:
+    """Check if the user has already purchased this movie."""
+    stmt = (
+        select(OrderItem)
+        .join(Order)
+        .where(
+            Order.user_id == user_id,
+            OrderItem.movie_id == movie_id,
+            Order.status == OrderStatusEnum.PAID,
+        )
+    )
+    result = await db.execute(stmt)
+    return result.scalar_one_or_none() is not None
 
+
+async def add_item_to_cart(db: AsyncSession, user_id: int, movie_id: int) -> CartItem:
+    """
+    Add movie to user's cart.
+    Validation: Movie must exist, not be purchased, and not already be in cart.
+    """
     stmt = select(Movie).where(Movie.id == movie_id)
     result = await db.execute(stmt)
     movie = result.scalar_one_or_none()
 
     if not movie:
         raise ValueError(f"Movie with id {movie_id} not found")
+
+    if await is_movie_purchased(db, user_id, movie_id):
+        raise ValueError("Repeat purchases are not allowed for this movie.")
+
+    cart = await get_or_create_cart(db, user_id)
 
     stmt = select(CartItem).where(
         CartItem.cart_id == cart.id, CartItem.movie_id == movie_id
@@ -57,7 +86,7 @@ async def add_item_to_cart(db: AsyncSession, user_id: int, movie_id: int) -> Car
     existing_item = result.scalar_one_or_none()
 
     if existing_item:
-        raise ValueError("Movie already in cart")
+        raise ValueError("Movie already in cart.")
 
     cart_item = CartItem(cart_id=cart.id, movie_id=movie_id)
 

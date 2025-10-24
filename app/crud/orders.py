@@ -14,9 +14,26 @@ from database.models.models import (
 )
 
 
+async def is_movie_purchased(db: AsyncSession, user_id: int, movie_id: int) -> bool:
+    """Check if the user has already purchased this movie."""
+    stmt = (
+        select(OrderItem)
+        .join(Order)
+        .where(
+            Order.user_id == user_id,
+            OrderItem.movie_id == movie_id,
+            Order.status == OrderStatusEnum.PAID,
+        )
+    )
+    result = await db.execute(stmt)
+    return result.scalar_one_or_none() is not None
+
+
 async def create_order_from_cart(db: AsyncSession, user_id: int) -> Order:
     """
-    Create order from user's cart
+    Create order from user's cart with validation.
+    Validation: Cart not empty, exclude purchased/unavailable movies,
+    and prevent pending orders for the same movie.
     """
     stmt = (
         select(Cart)
@@ -27,9 +44,77 @@ async def create_order_from_cart(db: AsyncSession, user_id: int) -> Order:
     cart = result.scalar_one_or_none()
 
     if not cart or not cart.items:
-        raise ValueError("Cart is empty")
+        raise ValueError("Cart is empty. Please add movies before creating an order.")
 
-    total_amount = sum(item.movie.price for item in cart.items)
+    items_to_order = []
+    movies_to_remove_from_cart = []
+    unavailable_movies = []
+    purchased_movies = []
+
+    for item in cart.items:
+        movie = item.movie
+
+        if not movie:
+            unavailable_movies.append(item)
+            movies_to_remove_from_cart.append(item.movie_id)
+            continue
+
+        if await is_movie_purchased(db, user_id, movie.id):
+            purchased_movies.append(movie.title)
+            movies_to_remove_from_cart.append(item.movie_id)
+            continue
+
+        pending_stmt = (
+            select(OrderItem)
+            .join(Order)
+            .where(
+                Order.user_id == user_id,
+                OrderItem.movie_id == movie.id,
+                Order.status == OrderStatusEnum.PENDING,
+            )
+        )
+        pending_result = await db.execute(pending_stmt)
+        if pending_result.scalar_one_or_none():
+            movies_to_remove_from_cart.append(item.movie_id)
+            continue
+
+        items_to_order.append(item)
+
+    if not items_to_order:
+        if movies_to_remove_from_cart:
+            delete_stmt = delete(CartItem).where(
+                CartItem.cart_id == cart.id,
+                CartItem.movie_id.in_(movies_to_remove_from_cart),
+            )
+            await db.execute(delete_stmt)
+            await db.commit()
+
+        messages = []
+        if purchased_movies:
+            messages.append(
+                f"The following movies have already been purchased: {', '.join(purchased_movies)}."
+            )
+        if unavailable_movies:
+            titles = [item.movie.title for item in unavailable_movies if item.movie]
+            messages.append(
+                f"The following movies are currently unavailable: {', '.join(titles)}."
+            )
+
+        if messages:
+            raise ValueError(
+                f"No valid movies left in cart to create an order. Details: {' '.join(messages)}"
+            )
+
+        raise ValueError("Cart is empty or all items are invalid.")
+
+    if purchased_movies or unavailable_movies:
+        delete_stmt = delete(CartItem).where(
+            CartItem.cart_id == cart.id,
+            CartItem.movie_id.in_(movies_to_remove_from_cart),
+        )
+        await db.execute(delete_stmt)
+
+    total_amount = sum(item.movie.price for item in items_to_order)
 
     order = Order(
         user_id=user_id, status=OrderStatusEnum.PENDING, total_amount=total_amount
@@ -38,7 +123,7 @@ async def create_order_from_cart(db: AsyncSession, user_id: int) -> Order:
     db.add(order)
     await db.flush()
 
-    for cart_item in cart.items:
+    for cart_item in items_to_order:
         order_item = OrderItem(
             order_id=order.id,
             movie_id=cart_item.movie_id,
@@ -46,7 +131,11 @@ async def create_order_from_cart(db: AsyncSession, user_id: int) -> Order:
         )
         db.add(order_item)
 
-    await db.execute(delete(CartItem).where(CartItem.cart_id == cart.id))
+    valid_movie_ids = [item.movie_id for item in items_to_order]
+    delete_valid_stmt = delete(CartItem).where(
+        CartItem.cart_id == cart.id, CartItem.movie_id.in_(valid_movie_ids)
+    )
+    await db.execute(delete_valid_stmt)
 
     await db.commit()
     await db.refresh(order)
