@@ -2,8 +2,8 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from database.models.models import Certification
-from schemas.certifications import CertificationCreate, CertificationUpdate
+from app.database.models.models import Certification
+from app.schemas.certifications import CertificationCreate, CertificationUpdate
 
 
 async def create_certification(db: AsyncSession, certification: CertificationCreate):

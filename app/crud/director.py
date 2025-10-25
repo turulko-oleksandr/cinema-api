@@ -2,8 +2,8 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from database.models.models import Director
-from schemas.directors import DirectorCreate, DirectorUpdate
+from app.database.models.models import Director
+from app.schemas.directors import DirectorCreate, DirectorUpdate
 
 
 async def create_director(db: AsyncSession, director: DirectorCreate):

@@ -3,17 +3,17 @@ from typing import List
 from fastapi import APIRouter, Depends, Query, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from crud import (
+from app.crud import (
     get_certifications,
     create_certification,
     get_certification,
     update_certification,
     delete_certification,
 )
-from database.db_session import get_db
-from database.models import User
-from schemas import CertificationResponse, CertificationCreate, CertificationUpdate
-from services.role_manager import require_moderator
+from app.database.db_session import get_db
+from app.database.models import User
+from app.schemas import CertificationResponse, CertificationCreate, CertificationUpdate
+from app.services.role_manager import require_moderator
 
 router = APIRouter(tags=["Certifications"])
 

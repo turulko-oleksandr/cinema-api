@@ -1,8 +1,8 @@
-import config
-import crud
-import database
-import exceptions
-import routes
-import schemas
-import services
-import test
+import app.config
+import app.crud
+import app.database
+import app.exceptions
+import app.routes
+import app.schemas
+import app.services
+import app.tests

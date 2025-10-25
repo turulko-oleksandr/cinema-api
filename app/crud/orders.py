@@ -4,7 +4,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, delete
 from sqlalchemy.orm import selectinload
 
-from database.models.models import (
+from app.tasks.email_tasks import send_order_confirmation_email_task
+
+from app.database.models.models import (
     Order,
     OrderItem,
     Cart,

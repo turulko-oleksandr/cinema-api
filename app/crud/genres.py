@@ -4,8 +4,8 @@ from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from database.models.models import Genre, Movie
-from schemas.genres import GenreCreate, GenreUpdate
+from app.database.models.models import Genre, Movie
+from app.schemas.genres import GenreCreate, GenreUpdate
 
 
 async def create_genre(db: AsyncSession, genre: GenreCreate):

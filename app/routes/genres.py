@@ -2,12 +2,12 @@ from typing import List
 from fastapi import APIRouter, Depends, Query, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from crud.genres import get_genres_with_count
-from crud import get_genres, create_genre, get_genre, update_genre, delete_genre
-from database import User
-from database.db_session import get_db
-from schemas import GenreResponse, GenreCreate, GenreUpdate, GenreWithCountResponse
-from services.role_manager import require_moderator
+from app.crud.genres import get_genres_with_count
+from app.crud import get_genres, create_genre, get_genre, update_genre, delete_genre
+from app.database import User
+from app.database.db_session import get_db
+from app.schemas import GenreResponse, GenreCreate, GenreUpdate, GenreWithCountResponse
+from app.services.role_manager import require_moderator
 
 router = APIRouter(tags=["Genres"])
 

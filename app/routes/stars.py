@@ -3,11 +3,11 @@ from typing import List
 from fastapi import APIRouter, Depends, Query, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from crud import get_stars, create_star, get_star, update_star, delete_star
-from database import User
-from database.db_session import get_db
-from schemas import StarResponse, StarCreate, StarUpdate
-from services.role_manager import require_moderator
+from app.crud import get_stars, create_star, get_star, update_star, delete_star
+from app.database import User
+from app.database.db_session import get_db
+from app.schemas import StarResponse, StarCreate, StarUpdate
+from app.services.role_manager import require_moderator
 
 router = APIRouter(tags=["Stars"])
 

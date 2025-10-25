@@ -3,7 +3,7 @@ from typing import List
 from datetime import datetime
 from decimal import Decimal
 
-from database.models.models import OrderStatusEnum
+from app.database.models.models import OrderStatusEnum
 from .movies import MovieListResponse
 
 

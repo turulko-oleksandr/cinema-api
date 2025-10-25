@@ -4,9 +4,9 @@ from sqlalchemy.exc import IntegrityError
 from typing import List, Optional
 from uuid import UUID
 
-from database import User
-from database.db_session import get_db
-from crud.movies import (
+from app.database import User
+from app.database.db_session import get_db
+from app.crud.movies import (
     create_movie,
     get_movie,
     get_movie_by_uuid,
@@ -19,14 +19,14 @@ from crud.movies import (
     get_trending_movies,
     get_new_releases,
 )
-from schemas.movies import (
+from app.schemas.movies import (
     MovieCreate,
     MovieUpdate,
     MovieResponse,
     MovieListResponse,
     PaginatedMoviesResponse,
 )
-from services.role_manager import get_current_user_optional, require_moderator
+from app.services.role_manager import get_current_user_optional, require_moderator
 
 router = APIRouter()
 

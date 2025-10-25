@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, delete, or_
 from sqlalchemy.orm import selectinload
 
-from database.models.models import (
+from app.database.models.models import (
     Cart,
     CartItem,
     Movie,

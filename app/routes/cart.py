@@ -1,22 +1,22 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from database.db_session import get_db
-from crud.cart import (
+from app.database.db_session import get_db
+from app.crud.cart import (
     get_cart_with_items,
     add_item_to_cart,
     remove_item_from_cart,
     clear_cart,
     get_cart_total,
 )
-from schemas.cart import (
+from app.schemas.cart import (
     CartResponse,
     CartItemCreate,
     CartItemResponse,
     CartTotalResponse,
 )
-from services.role_manager import get_current_user
-from database.models.models import User
+from app.services.role_manager import get_current_user
+from app.database.models.models import User
 
 router = APIRouter(tags=["Cart"])
 

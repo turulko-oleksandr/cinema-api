@@ -2,9 +2,9 @@ import os
 from functools import lru_cache
 from fastapi import Depends
 
-from .settings import TestingSettings, Settings, BaseAppSettings
-from services.interfaces import JWTAuthManagerInterface
-from services.token_manager import JWTAuthManager
+from app.config.settings import TestingSettings, Settings, BaseAppSettings
+from app.services.interfaces import JWTAuthManagerInterface
+from app.services.token_manager import JWTAuthManager
 
 
 @lru_cache()
