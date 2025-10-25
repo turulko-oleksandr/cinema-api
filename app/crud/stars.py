@@ -2,8 +2,8 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from database.models.models import Star
-from schemas.stars import StarCreate, StarUpdate
+from app.database.models.models import Star
+from app.schemas.stars import StarCreate, StarUpdate
 
 
 async def create_star(db: AsyncSession, star: StarCreate):

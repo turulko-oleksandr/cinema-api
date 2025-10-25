@@ -5,9 +5,13 @@ from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import SQLAlchemyError
 from passlib.context import CryptContext
-
-from config import get_settings
-from database import (
+from app.tasks.email_tasks import (
+    send_activation_email_task,
+    send_password_reset_email_task,
+    send_password_changed_email_task,
+)
+from app.config.dependencies import get_settings
+from app.database import (
     User,
     ActivationToken,
     PasswordResetToken,
@@ -15,8 +19,8 @@ from database import (
     UserGroup,
     UserGroupEnum,
 )
-from database import get_db
-from schemas.users import (
+from app.database import get_db
+from app.schemas.users import (
     UserRegistrationRequestSchema,
     UserLoginRequestSchema,
     UserLoginResponseSchema,
@@ -27,10 +31,10 @@ from schemas.users import (
     UserActivationRequestSchema,
     MessageResponseSchema,
 )
-from services.interfaces import JWTAuthManagerInterface
-from exceptions import TokenExpiredError, InvalidTokenError
-from config.dependencies import get_jwt_auth_manager
-from services.passwords import validate_password, hash_password, verify_password
+from app.services.interfaces import JWTAuthManagerInterface
+from app.exceptions import TokenExpiredError, InvalidTokenError
+from app.config.dependencies import get_jwt_auth_manager
+from app.services.passwords import validate_password, hash_password, verify_password
 
 router = APIRouter(tags=["Accounts"])
 
@@ -95,6 +99,8 @@ async def register_user(
 
     db.add(activation_token)
     await db.commit()
+
+    send_activation_email_task.delay(new_user.email, token_value)
 
     return {"email": new_user.email, "id": new_user.id}
 
@@ -261,6 +267,8 @@ async def request_password_reset(
     db.add(reset_token)
     await db.commit()
 
+    send_password_reset_email_task.delay(user.email, token_value)
+
     return {
         "message": "If you are registered, you will receive an email with instructions."
     }
@@ -311,5 +319,5 @@ async def complete_password_reset(
         raise HTTPException(
             status_code=500, detail="An error occurred while resetting the password."
         )
-
+    send_password_changed_email_task.delay(user.email)
     return {"message": "Password reset successfully."}

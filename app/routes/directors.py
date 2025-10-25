@@ -3,17 +3,17 @@ from typing import List
 from fastapi import APIRouter, Depends, Query, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from crud import (
+from app.crud import (
     get_directors,
     create_director,
     get_director,
     update_director,
     delete_director,
 )
-from database import User
-from database.db_session import get_db
-from schemas import DirectorResponse, DirectorCreate, DirectorUpdate
-from services.role_manager import require_moderator
+from app.database import User
+from app.database.db_session import get_db
+from app.schemas import DirectorResponse, DirectorCreate, DirectorUpdate
+from app.services.role_manager import require_moderator
 
 router = APIRouter(tags=["Directors"])
 

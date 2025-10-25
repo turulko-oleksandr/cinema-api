@@ -5,13 +5,13 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, delete, func
 from sqlalchemy.orm import selectinload
-from database.models.models import (
+from app.database.models.models import (
     Genre,
     Star,
     Director,
     Movie,
 )
-from schemas import MovieCreate, MovieUpdate
+from app.schemas import MovieCreate, MovieUpdate
 
 
 async def create_movie(db: AsyncSession, movie_data: MovieCreate):

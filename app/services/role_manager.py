@@ -5,10 +5,10 @@ from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 from typing import Optional
 
-from config import get_jwt_auth_manager
-from database import get_db, User, UserGroupEnum
-from services.interfaces import JWTAuthManagerInterface
-from exceptions import TokenExpiredError, InvalidTokenError
+from app.config.dependencies import get_jwt_auth_manager
+from app.database import get_db, User, UserGroupEnum
+from app.services.interfaces import JWTAuthManagerInterface
+from app.exceptions import TokenExpiredError, InvalidTokenError
 
 security = HTTPBearer()
 

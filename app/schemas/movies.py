@@ -4,10 +4,10 @@ from uuid import UUID
 from datetime import datetime
 from decimal import Decimal
 
-from schemas.genres import GenreResponse
-from schemas.certifications import CertificationResponse
-from schemas.directors import DirectorResponse
-from schemas.stars import StarResponse
+from app.schemas.genres import GenreResponse
+from app.schemas.certifications import CertificationResponse
+from app.schemas.directors import DirectorResponse
+from app.schemas.stars import StarResponse
 
 
 class MovieBase(BaseModel):
