@@ -292,6 +292,9 @@ class Payment(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     order_id = Column(Integer, ForeignKey("orders.id"), nullable=False)
+    session_id = Column(String(255), unique=True, index=True)
+    payment_intent_id = Column(String(255), index=True)
+
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     status = Column(
         Enum(PaymentStatusEnum, native_enum=False, length=20),
