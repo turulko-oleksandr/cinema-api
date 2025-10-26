@@ -6,3 +6,4 @@ from .stars import router as stars_router
 from .certifiacations import router as certifications_router
 from .orders import router as orders_router
 from .cart import router as cart_router
+from .webhooks.stripe import router as stripe_router

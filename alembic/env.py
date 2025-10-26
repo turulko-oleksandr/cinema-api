@@ -1,4 +1,5 @@
 import os
+import sys
 from logging.config import fileConfig
 
 from dotenv import load_dotenv
@@ -10,6 +11,8 @@ from alembic import context
 from app.database.models.models import Base
 
 load_dotenv()
+
+sys.path.insert(0, os.path.abspath("."))
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
