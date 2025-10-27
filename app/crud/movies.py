@@ -1,138 +1,96 @@
-from sqlalchemy import and_, or_
-from typing import Optional, List
-
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, delete, func
+from sqlalchemy import select, func, or_, and_
 from sqlalchemy.orm import selectinload
-from app.database.models.models import (
-    Genre,
-    Star,
-    Director,
-    Movie,
-)
-from app.schemas import MovieCreate, MovieUpdate
+from sqlalchemy.ext.asyncio import AsyncSession
+from typing import List, Optional, Tuple
+from app.database.models.models import Movie, Genre, Director, Star, Certification
+from app.schemas.movies import MovieCreate, MovieUpdate
 
 
-async def create_movie(db: AsyncSession, movie_data: MovieCreate):
-    existing = await db.execute(
-        select(Movie).where(
-            Movie.name == movie_data.name,
-            Movie.year == movie_data.year,
-            Movie.time == movie_data.time,
-        )
+async def create_movie(db: AsyncSession, movie: MovieCreate) -> Movie:
+    """Create a new movie with relationships"""
+    new_movie = Movie(
+        name=movie.name,
+        year=movie.year,
+        time=movie.time,
+        imdb=movie.imdb,
+        votes=movie.votes,
+        meta_score=movie.meta_score,
+        gross=movie.gross,
+        description=movie.description,
+        price=movie.price,
+        certification_id=movie.certification_id,
     )
-    if existing.scalar_one_or_none():
-        raise IntegrityError("Movie already exists", params=None, orig=None)
 
-    movie = Movie(
-        **movie_data.model_dump(exclude={"genre_ids", "director_ids", "star_ids"})
-    )
-    db.add(movie)
+    # Add genres
+    if movie.genre_ids:
+        stmt = select(Genre).where(Genre.id.in_(movie.genre_ids))
+        result = await db.execute(stmt)
+        genres = result.scalars().all()
+        new_movie.genres = list(genres)
+
+    # Add directors
+    if movie.director_ids:
+        stmt = select(Director).where(Director.id.in_(movie.director_ids))
+        result = await db.execute(stmt)
+        directors = result.scalars().all()
+        new_movie.directors = list(directors)
+
+    # Add stars
+    if movie.star_ids:
+        stmt = select(Star).where(Star.id.in_(movie.star_ids))
+        result = await db.execute(stmt)
+        stars = result.scalars().all()
+        new_movie.stars = list(stars)
+
+    db.add(new_movie)
     await db.commit()
-    await db.refresh(movie)
+    await db.refresh(new_movie)
 
-    if movie_data.genre_ids:
-        genres = await db.execute(
-            select(Genre).filter(Genre.id.in_(movie_data.genre_ids))
-        )
-        movie.genres = genres.scalars().all()
-
-    if movie_data.director_ids:
-        directors = await db.execute(
-            select(Director).filter(Director.id.in_(movie_data.director_ids))
-        )
-        movie.directors = directors.scalars().all()
-
-    if movie_data.star_ids:
-        stars = await db.execute(select(Star).filter(Star.id.in_(movie_data.star_ids)))
-        movie.stars = stars.scalars().all()
-
-    await db.commit()
-
-    result = await db.execute(
+    # Eagerly load all relationships
+    stmt = (
         select(Movie)
         .options(
+            selectinload(Movie.certification),
             selectinload(Movie.genres),
             selectinload(Movie.directors),
             selectinload(Movie.stars),
-            selectinload(Movie.certification),
         )
-        .filter(Movie.id == movie.id)
+        .where(Movie.id == new_movie.id)
     )
+    result = await db.execute(stmt)
     return result.scalar_one()
 
 
 async def get_movie(db: AsyncSession, movie_id: int) -> Optional[Movie]:
     """Get movie by ID with all relationships"""
-    query = (
+    stmt = (
         select(Movie)
         .options(
+            selectinload(Movie.certification),
             selectinload(Movie.genres),
             selectinload(Movie.directors),
             selectinload(Movie.stars),
-            selectinload(Movie.certification),
         )
         .where(Movie.id == movie_id)
     )
-    result = await db.execute(query)
+    result = await db.execute(stmt)
     return result.scalar_one_or_none()
 
 
-async def get_movie_by_uuid(db: AsyncSession, movie_uuid: str):
-    result = await db.execute(
+async def get_movie_by_uuid(db: AsyncSession, movie_uuid: str) -> Optional[Movie]:
+    """Get movie by UUID with all relationships"""
+    stmt = (
         select(Movie)
         .options(
+            selectinload(Movie.certification),
             selectinload(Movie.genres),
             selectinload(Movie.directors),
             selectinload(Movie.stars),
-            selectinload(Movie.certification),
         )
         .where(Movie.uuid == movie_uuid)
     )
+    result = await db.execute(stmt)
     return result.scalar_one_or_none()
-
-
-async def update_movie(db: AsyncSession, movie_id: int, movie: MovieUpdate):
-    result = await db.execute(select(Movie).where(Movie.id == movie_id))
-    db_movie = result.scalar_one_or_none()
-    if not db_movie:
-        return None
-
-    movie_data = movie.model_dump(
-        exclude_unset=True, exclude={"genre_ids", "director_ids", "star_ids"}
-    )
-    for key, value in movie_data.items():
-        setattr(db_movie, key, value)
-
-    if movie.genre_ids is not None:
-        result = await db.execute(select(Genre).where(Genre.id.in_(movie.genre_ids)))
-        db_movie.genres = result.scalars().all()
-
-    if movie.director_ids is not None:
-        result = await db.execute(
-            select(Director).where(Director.id.in_(movie.director_ids))
-        )
-        db_movie.directors = result.scalars().all()
-
-    if movie.star_ids is not None:
-        result = await db.execute(select(Star).where(Star.id.in_(movie.star_ids)))
-        db_movie.stars = result.scalars().all()
-
-    await db.commit()
-    await db.refresh(db_movie)
-    return db_movie
-
-
-async def delete_movie(db: AsyncSession, movie_id: int):
-    result = await db.execute(select(Movie).where(Movie.id == movie_id))
-    db_movie = result.scalar_one_or_none()
-    if not db_movie:
-        return None
-
-    await db.delete(db_movie)
-    await db.commit()
-    return db_movie
 
 
 async def get_movies(
@@ -141,231 +99,217 @@ async def get_movies(
     limit: int = 20,
     sort_by: str = "id",
     order: str = "asc",
-) -> tuple[List[Movie], int]:
-    """
-    Get movies with pagination and sorting
-
-    Returns: (movies_list, total_count)
-    """
-    query = select(Movie).options(
-        selectinload(Movie.genres),
-        selectinload(Movie.certification),
-    )
-
-    sort_column = getattr(Movie, sort_by, Movie.id)
-    if order.lower() == "desc":
-        query = query.order_by(sort_column.desc())
-    else:
-        query = query.order_by(sort_column.asc())
-
-    count_query = select(func.count()).select_from(Movie)
-    total_result = await db.execute(count_query)
+) -> Tuple[List[Movie], int]:
+    """Get paginated movies with relationships"""
+    # Count total
+    count_stmt = select(func.count(Movie.id))
+    total_result = await db.execute(count_stmt)
     total = total_result.scalar()
 
-    query = query.offset(skip).limit(limit)
+    # Get movies
+    stmt = select(Movie).options(
+        selectinload(Movie.certification),
+        selectinload(Movie.genres),
+        selectinload(Movie.directors),
+        selectinload(Movie.stars),
+    )
 
-    result = await db.execute(query)
+    # Add sorting
+    if hasattr(Movie, sort_by):
+        order_column = getattr(Movie, sort_by)
+        stmt = stmt.order_by(order_column.desc() if order == "desc" else order_column)
+
+    stmt = stmt.offset(skip).limit(limit)
+    result = await db.execute(stmt)
     movies = result.scalars().all()
 
     return list(movies), total
+
+
+async def update_movie(
+    db: AsyncSession, movie_id: int, movie_update: MovieUpdate
+) -> Optional[Movie]:
+    """Update movie"""
+    stmt = (
+        select(Movie)
+        .options(
+            selectinload(Movie.certification),
+            selectinload(Movie.genres),
+            selectinload(Movie.directors),
+            selectinload(Movie.stars),
+        )
+        .where(Movie.id == movie_id)
+    )
+    result = await db.execute(stmt)
+    existing_movie = result.scalar_one_or_none()
+
+    if not existing_movie:
+        return None
+
+    # Update basic fields
+    update_data = movie_update.model_dump(
+        exclude_unset=True, exclude={"genre_ids", "director_ids", "star_ids"}
+    )
+    for field, value in update_data.items():
+        setattr(existing_movie, field, value)
+
+    # Update genres if provided
+    if movie_update.genre_ids is not None:
+        stmt = select(Genre).where(Genre.id.in_(movie_update.genre_ids))
+        result = await db.execute(stmt)
+        genres = result.scalars().all()
+        existing_movie.genres = list(genres)
+
+    # Update directors if provided
+    if movie_update.director_ids is not None:
+        stmt = select(Director).where(Director.id.in_(movie_update.director_ids))
+        result = await db.execute(stmt)
+        directors = result.scalars().all()
+        existing_movie.directors = list(directors)
+
+    # Update stars if provided
+    if movie_update.star_ids is not None:
+        stmt = select(Star).where(Star.id.in_(movie_update.star_ids))
+        result = await db.execute(stmt)
+        stars = result.scalars().all()
+        existing_movie.stars = list(stars)
+
+    await db.commit()
+    await db.refresh(existing_movie)
+
+    # Reload with relationships
+    stmt = (
+        select(Movie)
+        .options(
+            selectinload(Movie.certification),
+            selectinload(Movie.genres),
+            selectinload(Movie.directors),
+            selectinload(Movie.stars),
+        )
+        .where(Movie.id == movie_id)
+    )
+    result = await db.execute(stmt)
+    return result.scalar_one()
+
+
+async def delete_movie(db: AsyncSession, movie_id: int) -> bool:
+    """Delete movie"""
+    stmt = select(Movie).where(Movie.id == movie_id)
+    result = await db.execute(stmt)
+    movie = result.scalar_one_or_none()
+
+    if not movie:
+        return False
+
+    await db.delete(movie)
+    await db.commit()
+    return True
 
 
 async def search_movies(
     db: AsyncSession,
     query_text: str,
-    search_in: List[str] = ["title", "description"],
+    search_in: List[str],
     skip: int = 0,
     limit: int = 20,
-) -> tuple[List[Movie], int]:
-    """
-    Search movies by title, description, actors, or directors
-
-    Args:
-        query_text: Search query
-        search_in: Fields to search in (title, description, actors, directors)
-        skip: Offset for pagination
-        limit: Number of results
-
-    Returns: (movies_list, total_count)
-    """
-    search_pattern = f"%{query_text.lower()}%"
-    conditions = []
+) -> Tuple[List[Movie], int]:
+    """Search movies by text"""
+    filters = []
 
     if "title" in search_in:
-        conditions.append(func.lower(Movie.name).like(search_pattern))
-
+        filters.append(Movie.name.ilike(f"%{query_text}%"))
     if "description" in search_in:
-        conditions.append(func.lower(Movie.description).like(search_pattern))
+        filters.append(Movie.description.ilike(f"%{query_text}%"))
 
-    query = select(Movie).options(
+    # Count total
+    count_stmt = select(func.count(Movie.id)).where(or_(*filters))
+    total_result = await db.execute(count_stmt)
+    total = total_result.scalar()
+
+    # Get movies
+    stmt = (
+        select(Movie)
+        .options(
+            selectinload(Movie.certification),
+            selectinload(Movie.genres),
+            selectinload(Movie.directors),
+            selectinload(Movie.stars),
+        )
+        .where(or_(*filters))
+        .offset(skip)
+        .limit(limit)
+    )
+    result = await db.execute(stmt)
+    movies = result.scalars().all()
+
+    return list(movies), total
+
+
+async def filter_movies(
+    db: AsyncSession,
+    year_from: Optional[int] = None,
+    year_to: Optional[int] = None,
+    imdb_min: Optional[float] = None,
+    imdb_max: Optional[float] = None,
+    price_min: Optional[float] = None,
+    price_max: Optional[float] = None,
+    genre_ids: Optional[List[int]] = None,
+    certification_ids: Optional[List[int]] = None,
+    skip: int = 0,
+    limit: int = 20,
+    sort_by: str = "id",
+    order: str = "asc",
+) -> Tuple[List[Movie], int]:
+    """Filter movies by multiple criteria"""
+    filters = []
+
+    if year_from:
+        filters.append(Movie.year >= year_from)
+    if year_to:
+        filters.append(Movie.year <= year_to)
+    if imdb_min:
+        filters.append(Movie.imdb >= imdb_min)
+    if imdb_max:
+        filters.append(Movie.imdb <= imdb_max)
+    if price_min:
+        filters.append(Movie.price >= price_min)
+    if price_max:
+        filters.append(Movie.price <= price_max)
+    if certification_ids:
+        filters.append(Movie.certification_id.in_(certification_ids))
+
+    # Count total
+    count_stmt = select(func.count(Movie.id))
+    if filters:
+        count_stmt = count_stmt.where(and_(*filters))
+
+    if genre_ids:
+        count_stmt = count_stmt.join(Movie.genres).where(Genre.id.in_(genre_ids))
+
+    total_result = await db.execute(count_stmt)
+    total = total_result.scalar()
+
+    # Get movies
+    stmt = select(Movie).options(
+        selectinload(Movie.certification),
         selectinload(Movie.genres),
         selectinload(Movie.directors),
         selectinload(Movie.stars),
-        selectinload(Movie.certification),
     )
 
-    if "actors" in search_in:
-        query = query.join(Movie.stars)
-        conditions.append(func.lower(Star.name).like(search_pattern))
-
-    if "directors" in search_in:
-        query = query.join(Movie.directors)
-        conditions.append(func.lower(Director.name).like(search_pattern))
-
-    if conditions:
-        query = query.where(or_(*conditions))
-
-    query = query.distinct()
-
-    count_query = select(func.count()).select_from(query.subquery())
-    total_result = await db.execute(count_query)
-    total = total_result.scalar()
-
-    query = query.offset(skip).limit(limit)
-
-    result = await db.execute(query)
-    movies = result.scalars().all()
-
-    return list(movies), total
-
-
-async def filter_movies(
-    db: AsyncSession,
-    year_from: Optional[int] = None,
-    year_to: Optional[int] = None,
-    imdb_min: Optional[float] = None,
-    imdb_max: Optional[float] = None,
-    price_min: Optional[float] = None,
-    price_max: Optional[float] = None,
-    genre_ids: Optional[List[int]] = None,
-    certification_ids: Optional[List[int]] = None,
-    skip: int = 0,
-    limit: int = 20,
-    sort_by: str = "id",
-    order: str = "asc",
-) -> tuple[List[Movie], int]:
-    """
-    Filter movies by multiple criteria
-
-    Returns: (movies_list, total_count)
-    """
-    query = select(Movie).options(
-        selectinload(Movie.genres),
-        selectinload(Movie.certification),
-    )
-
-    conditions = []
-
-    if year_from is not None:
-        conditions.append(Movie.year >= year_from)
-    if year_to is not None:
-        conditions.append(Movie.year <= year_to)
-
-    if imdb_min is not None:
-        conditions.append(Movie.imdb >= imdb_min)
-    if imdb_max is not None:
-        conditions.append(Movie.imdb <= imdb_max)
-
-    if price_min is not None:
-        conditions.append(Movie.price >= price_min)
-    if price_max is not None:
-        conditions.append(Movie.price <= price_max)
-
-    if certification_ids:
-        conditions.append(Movie.certification_id.in_(certification_ids))
+    if filters:
+        stmt = stmt.where(and_(*filters))
 
     if genre_ids:
-        query = query.join(Movie.genres).where(Genre.id.in_(genre_ids))
+        stmt = stmt.join(Movie.genres).where(Genre.id.in_(genre_ids))
 
-    if conditions:
-        query = query.where(and_(*conditions))
+    # Add sorting
+    if hasattr(Movie, sort_by):
+        order_column = getattr(Movie, sort_by)
+        stmt = stmt.order_by(order_column.desc() if order == "desc" else order_column)
 
-    query = query.distinct()
-
-    sort_column = getattr(Movie, sort_by, Movie.id)
-    if order.lower() == "desc":
-        query = query.order_by(sort_column.desc())
-    else:
-        query = query.order_by(sort_column.asc())
-
-    count_query = select(func.count()).select_from(query.subquery())
-    total_result = await db.execute(count_query)
-    total = total_result.scalar()
-
-    query = query.offset(skip).limit(limit)
-
-    result = await db.execute(query)
-    movies = result.scalars().all()
-
-    return list(movies), total
-
-
-async def filter_movies(
-    db: AsyncSession,
-    year_from: Optional[int] = None,
-    year_to: Optional[int] = None,
-    imdb_min: Optional[float] = None,
-    imdb_max: Optional[float] = None,
-    price_min: Optional[float] = None,
-    price_max: Optional[float] = None,
-    genre_ids: Optional[List[int]] = None,
-    certification_ids: Optional[List[int]] = None,
-    skip: int = 0,
-    limit: int = 20,
-    sort_by: str = "id",
-    order: str = "asc",
-) -> tuple[List[Movie], int]:
-    """
-    Filter movies by multiple criteria
-
-    Returns: (movies_list, total_count)
-    """
-    query = select(Movie).options(
-        selectinload(Movie.genres),
-        selectinload(Movie.certification),
-    )
-
-    conditions = []
-
-    if year_from is not None:
-        conditions.append(Movie.year >= year_from)
-    if year_to is not None:
-        conditions.append(Movie.year <= year_to)
-
-    if imdb_min is not None:
-        conditions.append(Movie.imdb >= imdb_min)
-    if imdb_max is not None:
-        conditions.append(Movie.imdb <= imdb_max)
-
-    if price_min is not None:
-        conditions.append(Movie.price >= price_min)
-    if price_max is not None:
-        conditions.append(Movie.price <= price_max)
-
-    if certification_ids:
-        conditions.append(Movie.certification_id.in_(certification_ids))
-
-    if genre_ids:
-        query = query.join(Movie.genres).where(Genre.id.in_(genre_ids))
-
-    if conditions:
-        query = query.where(and_(*conditions))
-
-    query = query.distinct()
-
-    sort_column = getattr(Movie, sort_by, Movie.id)
-    if order.lower() == "desc":
-        query = query.order_by(sort_column.desc())
-    else:
-        query = query.order_by(sort_column.asc())
-
-    count_query = select(func.count()).select_from(query.subquery())
-    total_result = await db.execute(count_query)
-    total = total_result.scalar()
-
-    query = query.offset(skip).limit(limit)
-
-    result = await db.execute(query)
+    stmt = stmt.offset(skip).limit(limit)
+    result = await db.execute(stmt)
     movies = result.scalars().all()
 
     return list(movies), total
@@ -378,71 +322,69 @@ async def get_movies_by_genre(
     limit: int = 20,
     sort_by: str = "id",
     order: str = "asc",
-) -> tuple[List[Movie], int]:
-    """
-    Get movies filtered by specific genre
+) -> Tuple[List[Movie], int]:
+    """Get movies by genre"""
+    # Count total
+    count_stmt = (
+        select(func.count(Movie.id)).join(Movie.genres).where(Genre.id == genre_id)
+    )
+    total_result = await db.execute(count_stmt)
+    total = total_result.scalar()
 
-    Returns: (movies_list, total_count)
-    """
-    query = (
+    # Get movies
+    stmt = (
         select(Movie)
         .options(
-            selectinload(Movie.genres),
             selectinload(Movie.certification),
+            selectinload(Movie.genres),
+            selectinload(Movie.directors),
+            selectinload(Movie.stars),
         )
         .join(Movie.genres)
         .where(Genre.id == genre_id)
     )
 
-    sort_column = getattr(Movie, sort_by, Movie.id)
-    if order.lower() == "desc":
-        query = query.order_by(sort_column.desc())
-    else:
-        query = query.order_by(sort_column.asc())
+    # Add sorting
+    if hasattr(Movie, sort_by):
+        order_column = getattr(Movie, sort_by)
+        stmt = stmt.order_by(order_column.desc() if order == "desc" else order_column)
 
-    count_query = select(func.count()).select_from(query.subquery())
-    total_result = await db.execute(count_query)
-    total = total_result.scalar()
-
-    query = query.offset(skip).limit(limit)
-
-    result = await db.execute(query)
+    stmt = stmt.offset(skip).limit(limit)
+    result = await db.execute(stmt)
     movies = result.scalars().all()
 
     return list(movies), total
 
 
 async def get_trending_movies(db: AsyncSession, limit: int = 10) -> List[Movie]:
-    """
-    Get trending movies (sorted by votes and IMDB rating)
-    """
-    query = (
+    """Get trending movies (by votes and rating)"""
+    stmt = (
         select(Movie)
         .options(
-            selectinload(Movie.genres),
             selectinload(Movie.certification),
+            selectinload(Movie.genres),
+            selectinload(Movie.directors),
+            selectinload(Movie.stars),
         )
         .order_by(Movie.votes.desc(), Movie.imdb.desc())
         .limit(limit)
     )
-
-    result = await db.execute(query)
+    result = await db.execute(stmt)
     return list(result.scalars().all())
 
 
 async def get_new_releases(db: AsyncSession, limit: int = 20) -> List[Movie]:
-    """
-    Get newest movies (sorted by year)
-    """
-    query = (
+    """Get new releases (by year)"""
+    stmt = (
         select(Movie)
         .options(
-            selectinload(Movie.genres),
             selectinload(Movie.certification),
+            selectinload(Movie.genres),
+            selectinload(Movie.directors),
+            selectinload(Movie.stars),
         )
-        .order_by(Movie.year.desc())
+        .order_by(Movie.year.desc(), Movie.id.desc())
         .limit(limit)
     )
-
-    result = await db.execute(query)
+    result = await db.execute(stmt)
     return list(result.scalars().all())
