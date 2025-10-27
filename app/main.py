@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from routes import (
+from app.routes import (
     accounts_router,
     movie_router,
     genres_router,
@@ -10,8 +10,8 @@ from routes import (
     orders_router,
     stripe_router,
 )
-from database.models.models import Base
-from database.db_session import engine
+from app.database.models.models import Base
+from app.database.db_session import engine
 
 
 app = FastAPI(title="Cinema", description="")
