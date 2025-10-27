@@ -11,10 +11,11 @@ class BaseAppSettings(BaseSettings):
     LOGIN_TIME_DAYS: int = 7
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
+    SYNC_PGSQL_DB_LINK: str = os.environ.get("PGSQL_SYNC_URL")
+    ASYNC_PGSQL_URL: str = os.environ.get("PGSQL_URL")
 
 
 class Settings(BaseAppSettings):
-    SYNC_PGSQL_DB_LINK: str = os.environ.get("PGSQL_SYNC_URL")
     POSTGRES_USER: str = os.getenv("POSTGRES_USER", "test_user")
     POSTGRES_PASSWORD: str = os.getenv("POSTGRES_PASSWORD", "test_password")
     POSTGRES_HOST: str = os.getenv("POSTGRES_HOST", "test_host")
