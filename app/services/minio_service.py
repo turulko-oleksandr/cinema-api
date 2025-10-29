@@ -15,7 +15,7 @@ class MinioService:
             f"{settings.MINIO_HOST}:{settings.MINIO_PORT}",
             access_key=settings.MINIO_ROOT_USER,
             secret_key=settings.MINIO_ROOT_PASSWORD,
-            secure=False  # True for HTTPS
+            secure=False,  # True for HTTPS
         )
         self.bucket_name = settings.MINIO_STORAGE
         self._ensure_bucket_exists()
@@ -29,11 +29,11 @@ class MinioService:
             print(f"Error creating bucket: {e}")
 
     def upload_file(
-            self,
-            file_data: bytes,
-            file_name: str,
-            content_type: str = "application/octet-stream",
-            folder: str = "avatars"
+        self,
+        file_data: bytes,
+        file_name: str,
+        content_type: str = "application/octet-stream",
+        folder: str = "avatars",
     ) -> str:
         """
         Upload file to MinIO
@@ -49,7 +49,7 @@ class MinioService:
         """
         try:
             # Generate unique file name
-            ext = file_name.split('.')[-1] if '.' in file_name else 'jpg'
+            ext = file_name.split(".")[-1] if "." in file_name else "jpg"
             unique_name = f"{uuid.uuid4()}.{ext}"
             object_name = f"{folder}/{unique_name}"
 
@@ -59,7 +59,7 @@ class MinioService:
                 object_name,
                 BytesIO(file_data),
                 length=len(file_data),
-                content_type=content_type
+                content_type=content_type,
             )
 
             return object_name
@@ -79,9 +79,7 @@ class MinioService:
         """
         try:
             url = self.client.presigned_get_object(
-                self.bucket_name,
-                object_name,
-                expires=timedelta(seconds=expires)
+                self.bucket_name, object_name, expires=timedelta(seconds=expires)
             )
             return url
         except S3Error as e:
@@ -133,5 +131,6 @@ def get_minio_service() -> MinioService:
     global _minio_service
     if _minio_service is None:
         from app.config.dependencies import get_settings
+
         _minio_service = MinioService(get_settings())
     return _minio_service
