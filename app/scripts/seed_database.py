@@ -13,8 +13,8 @@ from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker, selectinload
 
-from app.config.dependencies import get_settings
-from app.database.models.models import (
+from ..config.dependencies import get_settings
+from ..database.models.models import (
     Base,
     User,
     UserGroup,
