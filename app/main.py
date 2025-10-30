@@ -1,3 +1,6 @@
+import os
+
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routes import (
@@ -13,6 +16,7 @@ from app.routes import (
 )
 from app.routes.webhooks import stripe
 
+load_dotenv()
 app = FastAPI(
     title="Cinema API", description="API for Online Cinema Platform", version="1.0.0"
 )
@@ -20,7 +24,7 @@ app = FastAPI(
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production will change
+    allow_origins=[os.getenv("FRONTEND_URL")],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
