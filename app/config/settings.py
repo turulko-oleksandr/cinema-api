@@ -57,11 +57,19 @@ class Settings(BaseAppSettings):
         "STRIPE_CANCEL_URL", f"{FRONTEND_URL}/payment/cancel"
     )
 
+    # MinIO
+    MINIO_HOST: str = os.getenv("MINIO_HOST", "localhost")
+    MINIO_PORT: int = int(os.getenv("MINIO_PORT", "9000"))
+    MINIO_ROOT_USER: str = os.getenv("MINIO_ROOT_USER", "minioadmin")
+    MINIO_ROOT_PASSWORD: str = os.getenv("MINIO_ROOT_PASSWORD", "minioadmin")
+    MINIO_STORAGE: str = os.getenv("MINIO_STORAGE", "cinema-storage")
+
 
 class TestingSettings(BaseAppSettings):
     SECRET_KEY_ACCESS: str = "SECRET_KEY_ACCESS"
     SECRET_KEY_REFRESH: str = "SECRET_KEY_REFRESH"
     JWT_SIGNING_ALGORITHM: str = "HS256"
+
     # Email
     EMAIL_HOST: str = os.getenv("EMAIL_HOST", "localhost")
     EMAIL_PORT: int = int(os.getenv("EMAIL_PORT", "1025"))
@@ -92,6 +100,13 @@ class TestingSettings(BaseAppSettings):
     STRIPE_CANCEL_URL: str = os.getenv(
         "STRIPE_CANCEL_URL", f"{FRONTEND_URL}/payment/cancel"
     )
+
+    # MinIO
+    MINIO_HOST: str = os.getenv("MINIO_HOST", "localhost")
+    MINIO_PORT: int = int(os.getenv("MINIO_PORT", "9000"))
+    MINIO_ROOT_USER: str = os.getenv("MINIO_ROOT_USER", "minioadmin")
+    MINIO_ROOT_PASSWORD: str = os.getenv("MINIO_ROOT_PASSWORD", "minioadmin")
+    MINIO_STORAGE: str = os.getenv("MINIO_STORAGE", "test-storage")
 
     def model_post_init(self, __context: dict[str, Any] | None = None) -> None:
         object.__setattr__(self, "PATH_TO_DB", ":memory:")

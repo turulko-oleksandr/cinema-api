@@ -1,4 +1,8 @@
+import os
+
+from dotenv import load_dotenv
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from app.routes import (
     accounts_router,
     movie_router,
@@ -10,17 +14,21 @@ from app.routes import (
     orders_router,
     stripe_router,
 )
-from app.database.models.models import Base
-from app.database.db_session import engine
+from app.routes.webhooks import stripe
 
+load_dotenv()
+app = FastAPI(
+    title="Cinema API", description="API for Online Cinema Platform", version="1.0.0"
+)
 
-app = FastAPI(title="Cinema", description="")
-
-
-@app.on_event("startup")
-async def on_startup():
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+# CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[os.getenv("FRONTEND_URL")],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 api_version_prefix = "/api/v1"
@@ -44,3 +52,13 @@ app.include_router(
 app.include_router(cart_router, prefix="/api/v1/cart", tags=["Cart"])
 app.include_router(orders_router, prefix="/api/v1/orders", tags=["Orders"])
 app.include_router(stripe_router, prefix="/api/v1/webhooks/stripe", tags=["Stripe"])
+
+
+@app.get("/")
+async def root():
+    return {"message": "Welcome to Cinema API", "docs": "/docs", "redoc": "/redoc"}
+
+
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy"}
