@@ -7,3 +7,4 @@ from .certifiacations import router as certifications_router
 from .orders import router as orders_router
 from .cart import router as cart_router
 from .webhooks.stripe import router as stripe_router
+from .profiles import router as profile_router

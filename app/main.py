@@ -13,6 +13,7 @@ from app.routes import (
     cart_router,
     orders_router,
     stripe_router,
+    profile_router,
 )
 from app.routes.webhooks import stripe
 
@@ -35,6 +36,9 @@ api_version_prefix = "/api/v1"
 
 app.include_router(
     accounts_router, prefix=f"{api_version_prefix}/accounts", tags=["Accounts"]
+)
+app.include_router(
+    profile_router, prefix=f"{api_version_prefix}/profile", tags=["User Profile"]
 )
 app.include_router(movie_router, prefix=f"{api_version_prefix}/movies", tags=["Movies"])
 app.include_router(
