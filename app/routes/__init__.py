@@ -1,0 +1,10 @@
+from .movies import router as movie_router
+from .accounts import router as accounts_router
+from .genres import router as genres_router
+from .directors import router as directors_router
+from .stars import router as stars_router
+from .certifiacations import router as certifications_router
+from .orders import router as orders_router
+from .cart import router as cart_router
+from .webhooks.stripe import router as stripe_router
+from .profiles import router as profile_router
