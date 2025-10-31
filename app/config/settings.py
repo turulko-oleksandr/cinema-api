@@ -108,10 +108,3 @@ class TestingSettings(BaseAppSettings):
     MINIO_ROOT_PASSWORD: str = os.getenv("MINIO_ROOT_PASSWORD", "minioadmin")
     MINIO_STORAGE: str = os.getenv("MINIO_STORAGE", "test-storage")
 
-    def model_post_init(self, __context: dict[str, Any] | None = None) -> None:
-        object.__setattr__(self, "PATH_TO_DB", ":memory:")
-        object.__setattr__(
-            self,
-            "PATH_TO_MOVIES_CSV",
-            str(self.BASE_DIR / "database" / "seed_data" / "test_data.csv"),
-        )
