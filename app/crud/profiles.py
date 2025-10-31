@@ -48,7 +48,7 @@ async def update_user_avatar(
 ) -> UserProfile:
     """Update user avatar path"""
     profile = await get_or_create_user_profile(db, user_id)
-
+    print("DEBUG user_id:", user_id)
     # Store old avatar path for potential cleanup
     old_avatar = profile.avatar
 
